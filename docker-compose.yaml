@@ -1,0 +1,72 @@
+name: medusa
+
+services:
+  storefront: 
+    image: storefrontb2bstartermedusa:latest
+    depends_on:
+      - backend
+    build: 
+      context: ./storefront
+      dockerfile: Dockerfile
+    restart: always
+    networks:
+      - medusa
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+
+  backend:
+    image: backendb2bstartermedusa:latest
+    depends_on:
+      - redis
+      - postgres
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    networks:
+      - medusa
+    ports:
+      - "7000:7000"
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7.4
+    restart: always
+    networks:
+      - medusa
+    ports:
+      - "6390:6379"
+    volumes:
+      - ./data/redis/data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+
+  postgres:
+    image: postgres:16.4
+    restart: always
+    networks:
+      - medusa
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./data/postgres/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+
+networks:
+  medusa:

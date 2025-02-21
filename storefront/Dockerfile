@@ -1,21 +1,14 @@
-# Use Node.js LTS (Long Term Support) as the base image
-FROM node:20-alpine
+FROM node:23-alpine
+RUN corepack enable
 
 # Set working directory
 WORKDIR /app
-
-# Install system dependencies
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    git
 
 # Copy package files
 COPY package.json yarn.lock ./
 
 # Install dependencies with Yarn
-RUN yarn install --frozen-lockfile --production=false
+RUN yarn install
 
 # Copy the rest of the application code
 COPY . .
@@ -24,7 +17,7 @@ COPY . .
 RUN yarn build
 
 # Remove development dependencies
-RUN yarn install --frozen-lockfile --production=true
+RUN yarn install --immutable --production
 
 # Set environment variables
 ENV NODE_ENV=production \
