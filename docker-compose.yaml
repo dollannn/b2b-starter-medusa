@@ -1,20 +1,20 @@
 name: medusa
 
 services:
-  storefront: 
-    image: storefrontb2bstartermedusa:latest
-    depends_on:
-      - backend
-    build: 
-      context: ./storefront
-      dockerfile: Dockerfile
-    restart: always
-    networks:
-      - medusa
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
+  # storefront: 
+  #   image: storefrontb2bstartermedusa:latest
+  #   depends_on:
+  #     - backend
+  #   build: 
+  #     context: ./storefront
+  #     dockerfile: Dockerfile
+  #   restart: always
+  #   networks:
+  #     - medusa
+  #   ports:
+  #     - "3000:3000"
+  #   env_file:
+  #     - .env
 
   backend:
     image: backendb2bstartermedusa:latest
@@ -24,7 +24,6 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    restart: always
     networks:
       - medusa
     ports:
@@ -33,6 +32,7 @@ services:
       - .env
 
   redis:
+    container_name: medusa-redis
     image: redis:7.4
     restart: always
     networks:
@@ -52,6 +52,7 @@ services:
       - .env
 
   postgres:
+    container_name: medusa-postgres
     image: postgres:16.4
     restart: always
     networks:

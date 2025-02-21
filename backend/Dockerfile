@@ -1,34 +1,41 @@
-FROM node:23-alpine
-RUN corepack enable
+ARG BASE_IMAGE_TAG=22-alpine
 
-# Set working directory
-WORKDIR /app
+# Base image
+FROM node:${BASE_IMAGE_TAG} AS base
 
-# Copy package files
-COPY package.json yarn.lock ./
+# Dependencies
+FROM base AS deps
 
-# Install dependencies with Yarn
-RUN yarn install
+WORKDIR /app/
+COPY package.json /app/
+RUN npm i
 
-# Copy the rest of the application code
+# Builder
+FROM base AS builder
+
+WORKDIR /app/
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npx medusa build
 
-# Build the application
-RUN yarn build
+# Runner
+FROM base AS runner
 
-# Install production dependencies with immutable cache
-RUN yarn install --immutable --immutable-cache
-
-# Set environment variables
 ENV NODE_ENV=production \
     PORT=7000
 
 # Expose the port the app runs on
 EXPOSE 7000
 
-# Create a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+RUN addgroup -g 1001 -S medusa
+RUN adduser -S medusa -u 1001
 
-# Start the application
-CMD ["yarn", "start"]
+COPY --from=builder --chown=medusa:medusa /app/node_modules /app/node_modules
+COPY --from=builder --chown=medusa:medusa /app/.medusa/server /app
+
+USER medusa
+
+WORKDIR /app
+RUN npx medusa telemetry --disable
+
+CMD ["npx", "medusa", "start"]
